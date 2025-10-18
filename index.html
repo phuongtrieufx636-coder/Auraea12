@@ -653,15 +653,40 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
   .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
   .hint{opacity:.85}
 
-  /* === Floating Chat Buttons === */
-  .chat-buttons{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:14px;z-index:1000}
+  /* === Tooltips (4) === */
+  .tip{position:relative}
+  .tip[data-tip]:hover:after{content:attr(data-tip); position:absolute; left:0; bottom:calc(100% + 6px);
+    background:#0e1220; color:#e9eaff; border:1px solid #2d3150; padding:6px 8px; border-radius:8px;
+    font-size:12px; white-space:nowrap; z-index:20}
+
+  /* === Floating Chat Buttons (Telegram + Zalo) === */
+  .chat-buttons{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;z-index:1000}
   .fab{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;text-decoration:none;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12)}
   .fab svg{width:28px;height:28px;display:block}
   .fab.telegram{background:var(--accent)}
   .fab.zalo{background:#0084ff}
   .fab:hover{opacity:.9}
-  .chat-badge{position:fixed;right:86px;bottom:24px;z-index:1000;background:#111423;border:1px solid #2d3150;color:#e9eaff;padding:8px 10px;border-radius:9px;font-size:12px;white-space:nowrap;opacity:.95}
+  .chat-badge{position:fixed;right:86px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:1000;background:#111423;border:1px solid #2d3150;color:#e9eaff;padding:8px 10px;border-radius:9px;font-size:12px;white-space:nowrap;opacity:.95}
   @media (max-width:680px){ .chat-badge{display:none} }
+
+  /* === Mini Chat Popup (7) === */
+  .chat-popup{position:fixed;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 36px));background:#15182a;color:#e9eaff;border:1px solid #2b304c;border-radius:14px;box-shadow:0 14px 38px rgba(0,0,0,.45);z-index:1100;display:none}
+  .chat-popup.open{display:block}
+  .cp-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #2b304c}
+  .cp-title{font-weight:700}
+  .cp-body{padding:12px;display:grid;gap:10px}
+  .cp-row{display:flex;gap:8px}
+  .cp-btn{flex:1;padding:10px 12px;border-radius:10px;border:1px solid #2d3150;background:#111423;color:#e9eaff;text-align:center;text-decoration:none}
+  .cp-btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+  .cp-note{font-size:12px;color:#aab0c0}
+
+  /* === Mobile tweaks (6) === */
+  @media (max-width:680px){
+    body{padding:14px}
+    .kpi .v{font-size:16px}
+    .summary{grid-template-columns:1fr}
+    .row button{flex:1}
+  }
 </style>
 </head>
 <body>
@@ -671,32 +696,32 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
 <section class="card" id="capSection">
   <div class="group-title">🛡️ Tính vốn gồng X giá (DCA + XLot)</div>
   <div class="grid">
-    <div>
-      <label>Số vốn đang có (USD)</label>
+    <div class="tip" data-tip="Số dư hiện có dùng để chịu lỗ thả nổi khi DCA.">
+      <label for="cap_balance">Số vốn đang có (USD)</label>
       <input id="cap_balance" type="number" step="1" value="1000">
     </div>
-    <div>
-      <label>Lot ban đầu</label>
+    <div class="tip" data-tip="Kích thước lệnh đầu tiên trong chuỗi DCA.">
+      <label for="cap_lot0">Lot ban đầu</label>
       <input id="cap_lot0" type="number" step="0.01" value="0.01" min="0">
     </div>
-    <div>
-      <label>Hệ số nhân lot (XLot)</label>
+    <div class="tip" data-tip="Hệ số nhân lot cho mỗi nhát DCA kế tiếp (ví dụ 1.5 = tăng 50%).">
+      <label for="cap_mult">Hệ số nhân lot (XLot)</label>
       <input id="cap_mult" type="number" step="0.01" value="1.50" min="0">
     </div>
-    <div>
-      <label>Muốn gồng bao nhiêu giá ($)</label>
+    <div class="tip" data-tip="Biên độ giá muốn chịu theo USD (XAUUSD: 1$ = ~100 USD/lot).">
+      <label for="cap_move">Muốn gồng bao nhiêu giá ($)</label>
       <input id="cap_move" type="number" step="0.10" value="30">
     </div>
-    <div>
-      <label>Khoảng cách giữa các lệnh ($)</label>
+    <div class="tip" data-tip="Khoảng cách giữa các lệnh DCA (USD).">
+      <label for="cap_step">Khoảng cách giữa các lệnh ($)</label>
       <input id="cap_step" type="number" step="0.01" value="0.50" min="0.01">
     </div>
   </div>
 
   <div class="row" style="margin-top:12px">
     <button class="primary" id="capCalcBtn" type="button">Tính vốn cần</button>
-    <button class="muted" id="capMaxBtn" type="button">Tính “vốn này gồng tối đa bao nhiêu giá?”</button>
-    <span class="small hint">• Số dòng DCA được tính tự động từ “Muốn gồng” và “Khoảng cách”. USD/lot/1$ mặc định: 100.</span>
+    <button class="muted" id="capMaxBtn" type="button">Vốn này gồng tối đa?</button>
+    <span class="small hint">• DCA-lines tự động theo “Muốn gồng / Step”. USD/lot/1$ mặc định: 100.</span>
   </div>
 
   <div class="summary" style="margin-top:10px">
@@ -705,12 +730,19 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
     <div class="kpi"><div class="t">Số lệnh khớp / Tổng lot</div><div class="v mono" id="cap_lots">0 / 0</div></div>
   </div>
 
+  <!-- Share Row (5) -->
+  <div class="row" style="margin-top:12px">
+    <button class="muted" id="btnCopy" type="button">Sao chép kết quả</button>
+    <button class="muted" id="btnMiniChat" type="button">Mở mini chat</button>
+    <span class="small hint">• Cấu hình.</span>
+  </div>
+
   <pre id="capExplain" class="small" style="white-space:normal;background:#0e1220;padding:10px;border:1px solid #22273b;border-radius:8px;min-height:54px;margin-top:8px;line-height:1.5"></pre>
 </section>
 
 </div>
 
-<!-- Floating Chat Buttons -->
+<!-- Floating Chat Buttons (Telegram + Zalo) -->
 <div class="chat-buttons">
   <a class="fab telegram" href="https://t.me/thuantrieulcd" target="_blank" aria-label="Chat Telegram">
     <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M179.3 62.6c3.4-1.4 7 .8 7.6 4.4l.1.9c.6 7.3 1.6 23.9 2.1 37.6 1 27.8 1.4 41.8 1.4 41.8s.5 11.5-10.8 13.5c-8.2 1.4-18.6 2.7-31.3 4-15.7 1.6-26.6 2.5-26.6 2.5s-9.4.8-13.3-6.3c-2.4-4.3-15.3-27.2-20.7-36.4-1-1.7-.4-3.9 1.3-4.9.6-.3 1.3-.5 2-.4l37.4 5.9c1.3.2 2.6-.2 3.5-1.1l41-40.6c1.3-1.3 1.2-3.4-.1-4.7-1-1-2.6-1.2-3.9-.5l-56.4 30.3c-1.2.6-2.6.6-3.8 0L82.4 101c-2.1-1.1-2.4-4-.6-5.4l.6-.4 95.9-32.6z"/></svg>
@@ -721,18 +753,241 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
 </div>
 <div class="chat-badge">Nhắn Telegram / Zalo</div>
 
+<!-- Mini Chat Popup (7) -->
+<div class="chat-popup" id="chatPopup" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+  <div class="cp-head">
+    <div class="cp-title" id="cpTitle">Liên hệ nhanh</div>
+    <button class="muted" id="cpClose" aria-label="Đóng">Đóng</button>
+  </div>
+  <div class="cp-body">
+    <div class="cp-row">
+      <a id="cpTG" class="cp-btn primary" target="_blank">Mở Telegram</a>
+      <a id="cpZL" class="cp-btn" target="_blank">Mở Zalo</a>
+    </div>
+    <button id="cpCopy" class="cp-btn">Sao chép nội dung chia sẻ</button>
+    <div class="cp-note">Mẹo: Hãy gửi cấu hình + kết quả cho team để thống nhất rủi ro trước khi vào lệnh.</div>
+  </div>
+</div>
+
 <script>
-// ===== Capacity / Capital Calculator =====
-const USD_PER_LOT_PER_DOLLAR = 100;
+// ===== Constants =====
+const USD_PER_LOT_PER_DOLLAR = 100; // XAUUSD default
+const TG_HANDLE = 'thuantrieulcd';
+const ZALO_NUMBER = '0856676299';
+
+// ===== Helpers =====
 function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
 function autoFilledCount(m, step){ if(step <= 0) return 1; return Math.max(1, Math.floor(m/step)+1); }
 function fmt(n, d=2){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:d, maximumFractionDigits:d}); }
-function lossAtMoveUSD(m, lot0, mult, step, usdPerLotPerDollar){ const filled = autoFilledCount(m, step); let loss=0,sumLot=0; for(let i=0;i<filled;i++){const li=lot0*Math.pow(mult,i);const adverse=m-i*step;const part=adverse>0?adverse:0;loss+=part*li*usdPerLotPerDollar;sumLot+=li;}return{loss,filled,sumLot}; }
-function maxMoveForBalance(balance, lot0, mult, step, usdPerLotPerDollar){ let lo=0,hi=2000; for(let k=0;k<20;k++){const{loss}=lossAtMoveUSD(hi,lot0,mult,step,usdPerLotPerDollar); if(loss>balance)break; hi*=2; if(hi>1e5)break;} for(let it=0;it<60;it++){const mid=(lo+hi)/2;const{loss}=lossAtMoveUSD(mid,lot0,mult,step,usdPerLotPerDollar); if(loss<=balance)lo=mid;else hi=mid;} const res=lossAtMoveUSD(lo,lot0,mult,step,usdPerLotPerDollar); return{maxMove:lo,...res}; }
-function num(id,def=0){ const el=document.getElementById(id); if(!el)return def; const v=Number(el.value); return isFinite(v)?v:def; }
-function capExplainText({mode,move,need,balance,filled,sumLot,step,usdPerLotPerDollar}){ let html=`📏 Step: <b>${fmt(step,2)} $</b> · Giá trị: <b>${fmt(usdPerLotPerDollar,0)} USD/lot/1$</b><br>`; if(mode==='need'){html+=`🎯 Muốn gồng: <b>${fmt(move,2)} $</b><br>`;html+=`🔹 Số lệnh khớp (auto): <b>${filled}</b><br>`;html+=`🔹 Tổng lot: <b>${fmt(sumLot,4)}</b><br>`;html+=`💥 Lỗ thả nổi: <b>~${fmt(need,2)} USD</b><br>`;html+=`💰 Vốn cần tối thiểu: <b>≈${fmt(need,2)} USD</b> <span class="hint">(chưa tính margin/đệm)</span><br>`;}else{html+=`💰 Vốn đang có: <b>${fmt(balance,2)} USD</b><br>`;html+=`📉 Gồng tối đa (auto-lines): <b>${fmt(move,2)} $</b><br>`;html+=`🔹 Số lệnh khớp: <b>${filled}</b><br>`;html+=`🔹 Tổng lot: <b>${fmt(sumLot,4)}</b><br>`;} html+=`⚠️ Nên cộng thêm đệm <b>10–20%</b> để an toàn (phí, trượt giá, margin).`; return html; }
-function hookCapacityUI(){ const btnNeed=document.getElementById('capCalcBtn'); const btnMax=document.getElementById('capMaxBtn'); if(!btnNeed||!btnMax)return; const outNeed=document.getElementById('cap_need'); const outMaxM=document.getElementById('cap_maxmove'); const outLots=document.getElementById('cap_lots'); const explain=document.getElementById('capExplain'); btnNeed.addEventListener('click',()=>{const balance=num('cap_balance',0);const move=Math.max(0,num('cap_move',30));const step=clamp(num('cap_step',0.5),0.01,1e6);const lot0=Math.max(0,num('cap_lot0',0.01));const mult=Math.max(0,num('cap_mult',1.5));const{loss,filled,sumLot}=lossAtMoveUSD(move,lot0,mult,step,USD_PER_LOT_PER_DOLLAR);outNeed.textContent=fmt(loss,2)+' USD';outLots.textContent=`${filled} / ${fmt(sumLot,4)}`;const mx=maxMoveForBalance(balance,lot0,mult,step,USD_PER_LOT_PER_DOLLAR);outMaxM.textContent=fmt(mx.maxMove,2)+' $';explain.innerHTML=capExplainText({mode:'need',move,need:loss,balance,filled,sumLot,step,usdPerLotPerDollar:USD_PER_LOT_PER_DOLLAR});}); btnMax.addEventListener('click',()=>{const balance=num('cap_balance',0);const step=clamp(num('cap_step',0.5),0.01,1e6);const lot0=Math.max(0,num('cap_lot0',0.01));const mult=Math.max(0,num('cap_mult',1.5));const{maxMove,filled,sumLot}=maxMoveForBalance(balance,lot0,mult,step,USD_PER_LOT_PER_DOLLAR);outMaxM.textContent=fmt(maxMove,2)+' $';outLots.textContent=`${filled} / ${fmt(sumLot,4)}`;const move=Math.max(0,num('cap_move',30));const{loss}=lossAtMoveUSD(move,lot0,mult,step,USD_PER_LOT_PER_DOLLAR);outNeed.textContent=fmt(loss,2)+' USD';explain.innerHTML=capExplainText({mode:'max',move:maxMove,need:loss,balance,filled,sumLot,step,usdPerLotPerDollar:USD_PER_LOT_PER_DOLLAR});}); }
-document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('capSection'))hookCapacityUI();});
+function num(id, def=0){ const el = document.getElementById(id); if(!el) return def; const v = Number(el.value); return isFinite(v) ? v : def; }
+function setIf(id, v){ const el=document.getElementById(id); if(el) el.value=v; }
+
+// ===== Core calc =====
+function lossAtMoveUSD(m, lot0, mult, step, usdPerLotPerDollar){
+  const filled = autoFilledCount(m, step);
+  let loss = 0, sumLot = 0;
+  for(let i=0;i<filled;i++){
+    const li = lot0 * Math.pow(mult, i);
+    const adverse = m - i*step;
+    const part   = adverse > 0 ? adverse : 0;
+    loss += part * li * usdPerLotPerDollar;
+    sumLot += li;
+  }
+  return { loss, filled, sumLot };
+}
+
+function maxMoveForBalance(balance, lot0, mult, step, usdPerLotPerDollar){
+  let lo = 0, hi = 2000;
+  for(let k=0;k<20;k++){
+    const {loss} = lossAtMoveUSD(hi, lot0, mult, step, usdPerLotPerDollar);
+    if(loss > balance) break;
+    hi *= 2;
+    if(hi > 1e5) break;
+  }
+  for(let it=0; it<60; it++){
+    const mid = (lo+hi)/2;
+    const {loss} = lossAtMoveUSD(mid, lot0, mult, step, usdPerLotPerDollar);
+    if(loss <= balance) lo = mid; else hi = mid;
+  }
+  const res = lossAtMoveUSD(lo, lot0, mult, step, usdPerLotPerDollar);
+  return { maxMove: lo, ...res };
+}
+
+// ===== Share text (5 & 7) =====
+function buildResultText(){
+  const balance = num('cap_balance');
+  const lot0 = num('cap_lot0');
+  const mult = num('cap_mult');
+  const move = num('cap_move');
+  const step = num('cap_step');
+  const need = document.getElementById('cap_need')?.textContent || '0 USD';
+  const maxm = document.getElementById('cap_maxmove')?.textContent || '0 $';
+  const lots = document.getElementById('cap_lots')?.textContent || '0 / 0';
+
+  return (
+`🛡️ DCA + XLot – cấu hình
+• Balance: ${fmt(balance,2)} USD
+• Lot0: ${fmt(lot0,2)} · XLot: ${fmt(mult,2)}
+• Gồng: ${fmt(move,2)} $ · Step: ${fmt(step,2)} $
+• USD/lot/1$: ${fmt(USD_PER_LOT_PER_DOLLAR,0)}
+
+📊 Kết quả
+• Vốn cần: ${need}
+• Vốn này gồng tối đa: ${maxm}
+• Lệnh khớp / Tổng lot: ${lots}
+
+Liên hệ: Telegram @${TG_HANDLE} · Zalo ${ZALO_NUMBER}`
+  );
+}
+
+function openTelegramWithText(text){
+  const url = 'https://t.me/share/url?url=' + encodeURIComponent('') + '&text=' + encodeURIComponent(text);
+  window.open(url, '_blank');
+}
+
+// Zalo share deep-links không public ổn định; dùng copy rồi mở chat.
+function openZalo(){
+  window.open('https://zalo.me/' + ZALO_NUMBER, '_blank');
+}
+
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }catch(e){
+    const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e2){} document.body.removeChild(ta); return false;
+  }
+}
+
+// ===== LocalStorage (3) =====
+function saveSettings(){
+  const s = {
+    cap_balance: num('cap_balance'),
+    cap_lot0: num('cap_lot0'),
+    cap_mult: num('cap_mult'),
+    cap_move: num('cap_move'),
+    cap_step: num('cap_step')
+  };
+  localStorage.setItem('dcaSettings', JSON.stringify(s));
+}
+function restoreSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem('dcaSettings')||'{}');
+    for(const k in s) setIf(k, s[k]);
+  }catch(e){}
+}
+
+// ===== UI Hooks =====
+function capExplainText({mode, move, need, balance, filled, sumLot, step, usdPerLotPerDollar}){
+  let html = `📏 Step: <b>${fmt(step,2)} $</b> · Giá trị: <b>${fmt(usdPerLotPerDollar,0)} USD/lot/1$</b><br>`;
+  if(mode==='need'){
+    html += `🎯 Muốn gồng: <b>${fmt(move,2)} $</b><br>`;
+    html += `🔹 Số lệnh khớp (auto): <b>${filled}</b><br>`;
+    html += `🔹 Tổng lot: <b>${fmt(sumLot,4)}</b><br>`;
+    html += `💥 Lỗ thả nổi: <b>~${fmt(need,2)} USD</b><br>`;
+    html += `💰 Vốn cần tối thiểu: <b>≈${fmt(need,2)} USD</b> <span class="hint">(chưa tính margin/đệm)</span><br>`;
+  }else{
+    html += `💰 Vốn đang có: <b>${fmt(balance,2)} USD</b><br>`;
+    html += `📉 Gồng tối đa (auto-lines): <b>${fmt(move,2)} $</b><br>`;
+    html += `🔹 Số lệnh khớp: <b>${filled}</b><br>`;
+    html += `🔹 Tổng lot: <b>${fmt(sumLot,4)}</b><br>`;
+  }
+  html += `⚠️ Nên cộng thêm đệm <b>10–20%</b> để an toàn (phí, trượt giá, margin).`;
+  return html;
+}
+
+function hookCapacityUI(){
+  const btnNeed = document.getElementById('capCalcBtn');
+  const btnMax  = document.getElementById('capMaxBtn');
+  if(!btnNeed || !btnMax) return;
+
+  const outNeed = document.getElementById('cap_need');
+  const outMaxM = document.getElementById('cap_maxmove');
+  const outLots = document.getElementById('cap_lots');
+  const explain = document.getElementById('capExplain');
+
+  const inputs = ['cap_balance','cap_lot0','cap_mult','cap_move','cap_step'];
+  inputs.forEach(id=>{
+    const el=document.getElementById(id); if(!el) return; el.addEventListener('change', saveSettings); el.addEventListener('input', ()=>{ /* debounce simple */ clearTimeout(el._t); el._t=setTimeout(saveSettings, 200); });
+  });
+
+  btnNeed.addEventListener('click', ()=>{
+    const balance = num('cap_balance', 0);
+    const move    = Math.max(0, num('cap_move', 30));
+    const step    = clamp(num('cap_step', 0.5), 0.01, 1e6);
+    const lot0    = Math.max(0, num('cap_lot0', 0.01));
+    const mult    = Math.max(0, num('cap_mult', 1.5));
+
+    const {loss, filled, sumLot} = lossAtMoveUSD(move, lot0, mult, step, USD_PER_LOT_PER_DOLLAR);
+
+    outNeed.textContent = fmt(loss,2) + ' USD';
+    outLots.textContent = `${filled} / ${fmt(sumLot,4)}`;
+
+    const mx = maxMoveForBalance(balance, lot0, mult, step, USD_PER_LOT_PER_DOLLAR);
+    outMaxM.textContent = fmt(mx.maxMove,2) + ' $';
+
+    explain.innerHTML = capExplainText({
+      mode:'need', move, need:loss, balance, filled, sumLot,
+      step, usdPerLotPerDollar:USD_PER_LOT_PER_DOLLAR
+    });
+  });
+
+  btnMax.addEventListener('click', ()=>{
+    const balance = num('cap_balance', 0);
+    const step    = clamp(num('cap_step', 0.5), 0.01, 1e6);
+    const lot0    = Math.max(0, num('cap_lot0', 0.01));
+    const mult    = Math.max(0, num('cap_mult', 1.5));
+
+    const {maxMove, filled, sumLot} = maxMoveForBalance(balance, lot0, mult, step, USD_PER_LOT_PER_DOLLAR);
+
+    outMaxM.textContent = fmt(maxMove,2) + ' $';
+    outLots.textContent = `${filled} / ${fmt(sumLot,4)}`;
+
+    const move = Math.max(0, num('cap_move', 30));
+    const {loss} = lossAtMoveUSD(move, lot0, mult, step, USD_PER_LOT_PER_DOLLAR);
+    outNeed.textContent = fmt(loss,2) + ' USD';
+
+    explain.innerHTML = capExplainText({
+      mode:'max', move:maxMove, need:loss, balance, filled, sumLot,
+      step, usdPerLotPerDollar:USD_PER_LOT_PER_DOLLAR
+    });
+  });
+}
+
+// ===== Share Buttons (5) & Mini Chat (7) =====
+function hookShareUI(){
+  const btnTG = document.getElementById('btnShareTG');
+  const btnCopy = document.getElementById('btnCopy');
+  const btnMini = document.getElementById('btnMiniChat');
+  const popup = document.getElementById('chatPopup');
+  const cpClose = document.getElementById('cpClose');
+  const cpTG = document.getElementById('cpTG');
+  const cpZL = document.getElementById('cpZL');
+  const cpCopy = document.getElementById('cpCopy');
+
+  if(btnTG) btnTG.addEventListener('click', ()=>{ openTelegramWithText(buildResultText()); });
+  if(btnCopy) btnCopy.addEventListener('click', async ()=>{
+    const ok = await copyText(buildResultText());
+    btnCopy.textContent = ok ? 'Đã sao chép ✓' : 'Không thể sao chép';
+    setTimeout(()=> btnCopy.textContent = 'Sao chép kết quả', 1500);
+  });
+  if(btnMini) btnMini.addEventListener('click', ()=> popup.classList.add('open'));
+  if(cpClose) cpClose.addEventListener('click', ()=> popup.classList.remove('open'));
+  if(cpTG) cpTG.addEventListener('click', ()=> openTelegramWithText(buildResultText()));
+  if(cpZL) cpZL.addEventListener('click', ()=> openZalo());
+  if(cpCopy) cpCopy.addEventListener('click', async ()=>{
+    const ok = await copyText(buildResultText());
+    cpCopy.textContent = ok ? 'Đã sao chép ✓' : 'Không thể sao chép';
+    setTimeout(()=> cpCopy.textContent = 'Sao chép nội dung chia sẻ', 1500);
+  });
+}
+
+// ===== Init =====
+window.addEventListener('DOMContentLoaded', ()=>{
+  restoreSettings();
+  if(document.getElementById('capSection')) hookCapacityUI();
+  hookShareUI();
+});
+
+window.addEventListener('beforeunload', saveSettings);
 </script>
 </body>
 </html>
+
