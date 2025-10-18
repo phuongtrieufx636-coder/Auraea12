@@ -634,7 +634,7 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
   *{box-sizing:border-box}
   body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; color:var(--text);
         background: radial-gradient(80% 100% at 20% 0%, #171a2c 0%, var(--bg) 60%); padding:20px; }
-  .wrap{max-width:900px;margin:0 auto}
+  .wrap{max-width:1100px;margin:0 auto}
   .card{background:#191c2e;border:1px solid #272a42;border-radius:14px;padding:14px}
   .group-title{font-weight:700;margin:4px 0 10px 0}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -680,6 +680,15 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
   .cp-btn.primary{background:var(--accent);border-color:transparent;color:#fff}
   .cp-note{font-size:12px;color:#aab0c0}
 
+  /* === Lot list === */
+  .lotlist{margin-top:10px;background:#0e1220;border:1px solid #22273b;border-radius:10px;padding:10px}
+  .lotlist h4{margin:0 0 8px 0;font-size:13px;color:#aab0c0}
+  .lotlist .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .lotlist .tbl th,.lotlist .tbl td{padding:8px;border-bottom:1px solid #1f2440;text-align:left}
+  .lotlist .tbl th{color:#9aa1b9;font-weight:600}
+  .lotlist .tbl td.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+  .lotlist .scroller{max-height:220px;overflow:auto}
+
   /* === Mobile tweaks (6) === */
   @media (max-width:680px){
     body{padding:14px}
@@ -687,6 +696,70 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
     .summary{grid-template-columns:1fr}
     .row button{flex:1}
   }
+
+  /* ==== Layout: đưa bảng Chi tiết sang cột phải ==== */
+  #capSection{
+    display:grid;
+    grid-template-columns: 1.25fr 0.95fr; /* trái rộng hơn phải một chút */
+    gap:12px;
+  }
+  /* mặc định mọi thành phần trong card nằm cột trái */
+  #capSection > *{ grid-column: 1; }
+  /* tiêu đề chạy ngang 2 cột */
+  #capSection .group-title{ grid-column: 1 / -1; }
+  /* khối nhập + kết quả gộp vào cột trái, để tự chảy như cũ */
+  #capSection .grid,
+  #capSection .row,
+  #capSection .summary,
+  #capSection pre#capExplain{ grid-column: 1; }
+  /* bảng Chi tiết: sang cột phải + sticky để cuộn vẫn thấy */
+  #lotListBox{
+    grid-column: 2;
+    grid-row: 2 / span 6;   /* chiếm nhiều hàng bên phải */
+    align-self: start;
+    position: sticky;
+    top: 14px;              /* khoảng cách với mép trên khi sticky */
+    max-height: calc(100vh - 120px);
+    overflow: hidden;
+  }
+  #lotListBox .scroller{
+    max-height: calc(100vh - 220px); /* bảng cuộn trong khung phải */
+    overflow: auto;
+  }
+  /* Mobile: trở về 1 cột như cũ */
+  @media (max-width:680px){
+    #capSection{ display:block; }
+    #lotListBox{ position:static; max-height:none; }
+  }
+
+/* === Cố định bảng Chi tiết bên phải, canh hàng với vùng XLot === */
+#lotListBox {
+  position: fixed !important;
+  top: 120px;              /* canh cùng chiều cao với phần XLot */
+  right: 40px;             /* khoảng cách mép phải */
+  width: 420px;            /* rộng hơn 1 chút để dễ đọc */
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  z-index: 300;
+  background: #0e1220;
+  border: 1px solid #22273b;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  transition: all .3s ease-in-out;
+}
+
+/* Khi cửa sổ thu nhỏ, bảng quay về dạng bình thường */
+@media (max-width: 900px) {
+  #lotListBox {
+    position: static !important;
+    width: 100%;
+    max-height: none;
+    box-shadow: none;
+  }
+}
+
+
 </style>
 </head>
 <body>
@@ -733,11 +806,32 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
   <!-- Share Row (5) -->
   <div class="row" style="margin-top:12px">
     <button class="muted" id="btnCopy" type="button">Sao chép kết quả</button>
+    <button class="muted" id="btnCSV" type="button">Tải CSV</button>
     <button class="muted" id="btnMiniChat" type="button">Mở mini chat</button>
-    <span class="small hint">• Cấu hình.</span>
+    <span class="small hint">• Chia sẻ nhanh cấu hình + kết quả cho team.</span>
   </div>
 
   <pre id="capExplain" class="small" style="white-space:normal;background:#0e1220;padding:10px;border:1px solid #22273b;border-radius:8px;min-height:54px;margin-top:8px;line-height:1.5"></pre>
+
+  <!-- Lot list table (sang cột phải bằng CSS grid) -->
+  <div class="lotlist" id="lotListBox" style="display:none">
+    <h4>Chi tiết số lệnh & lot theo từng mức DCA</h4>
+    <div class="scroller">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Khoảng cách ( $ )</th>
+            <th>Lot</th>
+            <th>Phần giá chịu lỗ</th>
+            <th>Lỗ phần này (USD)</th>
+          </tr>
+        </thead>
+        <tbody id="lotListBody"></tbody>
+      </table>
+    </div>
+    <div class="small hint" id="lotListNote" style="margin-top:6px"></div>
+  </div>
 </section>
 
 </div>
@@ -770,19 +864,19 @@ document.getElementById('btnPaid').addEventListener('click', ()=>{
 </div>
 
 <script>
-// ===== Constants =====
+/* ===== Constants ===== */
 const USD_PER_LOT_PER_DOLLAR = 100; // XAUUSD default
 const TG_HANDLE = 'thuantrieulcd';
 const ZALO_NUMBER = '0856676299';
 
-// ===== Helpers =====
+/* ===== Helpers ===== */
 function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
 function autoFilledCount(m, step){ if(step <= 0) return 1; return Math.max(1, Math.floor(m/step)+1); }
 function fmt(n, d=2){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:d, maximumFractionDigits:d}); }
 function num(id, def=0){ const el = document.getElementById(id); if(!el) return def; const v = Number(el.value); return isFinite(v) ? v : def; }
 function setIf(id, v){ const el=document.getElementById(id); if(el) el.value=v; }
 
-// ===== Core calc =====
+/* ===== Core calc ===== */
 function lossAtMoveUSD(m, lot0, mult, step, usdPerLotPerDollar){
   const filled = autoFilledCount(m, step);
   let loss = 0, sumLot = 0;
@@ -813,7 +907,48 @@ function maxMoveForBalance(balance, lot0, mult, step, usdPerLotPerDollar){
   return { maxMove: lo, ...res };
 }
 
-// ===== Share text (5 & 7) =====
+/* ===== Lot rows & render ===== */
+function perOrderRows(move, lot0, mult, step, usdPerLotPerDollar){
+  const n = autoFilledCount(move, step);
+  const rows = [];
+  for(let i=0;i<n;i++){
+    const li = lot0 * Math.pow(mult, i);
+    const adverse = Math.max(0, move - i*step); // phần giá còn “âm” tại mức i
+    const lossPart = adverse * li * usdPerLotPerDollar;
+    rows.push({idx:i+1, offset:(i*step), lot:li, adverse, lossPart});
+  }
+  return rows;
+}
+
+let _lastLotRows = []; // lưu cho CSV
+
+function renderLotList({mode, move, step, lot0, mult, usdPerLotPerDollar}){
+  const box = document.getElementById('lotListBox');
+  const body = document.getElementById('lotListBody');
+  const note = document.getElementById('lotListNote');
+  if(!box || !body || !note) return;
+
+  const rows = perOrderRows(move, lot0, mult, step, usdPerLotPerDollar);
+  _lastLotRows = rows.slice();
+
+  body.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.idx}</td>
+      <td class="mono">${fmt(r.offset,2)}</td>
+      <td class="mono">${fmt(r.lot,4)}</td>
+      <td class="mono">${fmt(r.adverse,2)} $</td>
+      <td class="mono">${fmt(r.lossPart,2)}</td>
+    </tr>
+  `).join('');
+
+  const totalLot = rows.reduce((s,r)=>s+r.lot,0);
+  const totalLoss = rows.reduce((s,r)=>s+r.lossPart,0);
+
+  note.innerHTML = `Tổng lệnh: <b>${rows.length}</b> · Tổng lot: <b>${fmt(totalLot,4)}</b> · Tổng lỗ phần: <b>~${fmt(totalLoss,2)} USD</b>`;
+  box.style.display = rows.length ? 'block' : 'none';
+}
+
+/* ===== Share text (5 & 7) ===== */
 function buildResultText(){
   const balance = num('cap_balance');
   const lot0 = num('cap_lot0');
@@ -856,7 +991,7 @@ async function copyText(text){
   }
 }
 
-// ===== LocalStorage (3) =====
+/* ===== LocalStorage (3) ===== */
 function saveSettings(){
   const s = {
     cap_balance: num('cap_balance'),
@@ -874,7 +1009,28 @@ function restoreSettings(){
   }catch(e){}
 }
 
-// ===== UI Hooks =====
+/* ===== CSV export ===== */
+function rowsToCSV(rows){
+  const header = ['#','Khoảng cách ($)','Lot','Phần giá chịu lỗ ($)','Lỗ phần này (USD)'];
+  const lines = [header.join(',')];
+  for(const r of rows){
+    lines.push([r.idx, r.offset.toFixed(2), r.lot.toFixed(4), r.adverse.toFixed(2), r.lossPart.toFixed(2)].join(','));
+  }
+  return lines.join('\n');
+}
+function downloadCSV(filename, text){
+  const blob = new Blob([text], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ===== UI Hooks ===== */
 function capExplainText({mode, move, need, balance, filled, sumLot, step, usdPerLotPerDollar}){
   let html = `📏 Step: <b>${fmt(step,2)} $</b> · Giá trị: <b>${fmt(usdPerLotPerDollar,0)} USD/lot/1$</b><br>`;
   if(mode==='need'){
@@ -905,7 +1061,9 @@ function hookCapacityUI(){
 
   const inputs = ['cap_balance','cap_lot0','cap_mult','cap_move','cap_step'];
   inputs.forEach(id=>{
-    const el=document.getElementById(id); if(!el) return; el.addEventListener('change', saveSettings); el.addEventListener('input', ()=>{ /* debounce simple */ clearTimeout(el._t); el._t=setTimeout(saveSettings, 200); });
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('change', saveSettings);
+    el.addEventListener('input', ()=>{ clearTimeout(el._t); el._t=setTimeout(saveSettings, 200); });
   });
 
   btnNeed.addEventListener('click', ()=>{
@@ -926,6 +1084,15 @@ function hookCapacityUI(){
     explain.innerHTML = capExplainText({
       mode:'need', move, need:loss, balance, filled, sumLot,
       step, usdPerLotPerDollar:USD_PER_LOT_PER_DOLLAR
+    });
+
+    renderLotList({
+      mode:'need',
+      move,
+      step,
+      lot0,
+      mult,
+      usdPerLotPerDollar: USD_PER_LOT_PER_DOLLAR
     });
   });
 
@@ -948,13 +1115,22 @@ function hookCapacityUI(){
       mode:'max', move:maxMove, need:loss, balance, filled, sumLot,
       step, usdPerLotPerDollar:USD_PER_LOT_PER_DOLLAR
     });
+
+    renderLotList({
+      mode:'max',
+      move: maxMove,
+      step,
+      lot0,
+      mult,
+      usdPerLotPerDollar: USD_PER_LOT_PER_DOLLAR
+    });
   });
 }
 
-// ===== Share Buttons (5) & Mini Chat (7) =====
+/* ===== Share Buttons (5) & Mini Chat (7) ===== */
 function hookShareUI(){
-  const btnTG = document.getElementById('btnShareTG');
   const btnCopy = document.getElementById('btnCopy');
+  const btnCSV = document.getElementById('btnCSV');
   const btnMini = document.getElementById('btnMiniChat');
   const popup = document.getElementById('chatPopup');
   const cpClose = document.getElementById('cpClose');
@@ -962,12 +1138,23 @@ function hookShareUI(){
   const cpZL = document.getElementById('cpZL');
   const cpCopy = document.getElementById('cpCopy');
 
-  if(btnTG) btnTG.addEventListener('click', ()=>{ openTelegramWithText(buildResultText()); });
   if(btnCopy) btnCopy.addEventListener('click', async ()=>{
     const ok = await copyText(buildResultText());
     btnCopy.textContent = ok ? 'Đã sao chép ✓' : 'Không thể sao chép';
     setTimeout(()=> btnCopy.textContent = 'Sao chép kết quả', 1500);
   });
+
+  if(btnCSV) btnCSV.addEventListener('click', ()=>{
+    if(!_lastLotRows.length){
+      btnCSV.textContent = 'Chưa có dữ liệu';
+      setTimeout(()=> btnCSV.textContent = 'Tải CSV', 1200);
+      return;
+    }
+    const csv = rowsToCSV(_lastLotRows);
+    const ts = new Date().toISOString().replace(/[:.]/g,'-');
+    downloadCSV(`DCA_XLot_${ts}.csv`, csv);
+  });
+
   if(btnMini) btnMini.addEventListener('click', ()=> popup.classList.add('open'));
   if(cpClose) cpClose.addEventListener('click', ()=> popup.classList.remove('open'));
   if(cpTG) cpTG.addEventListener('click', ()=> openTelegramWithText(buildResultText()));
@@ -979,7 +1166,7 @@ function hookShareUI(){
   });
 }
 
-// ===== Init =====
+/* ===== Init ===== */
 window.addEventListener('DOMContentLoaded', ()=>{
   restoreSettings();
   if(document.getElementById('capSection')) hookCapacityUI();
@@ -990,4 +1177,3 @@ window.addEventListener('beforeunload', saveSettings);
 </script>
 </body>
 </html>
-
